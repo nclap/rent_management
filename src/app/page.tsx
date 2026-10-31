@@ -10,17 +10,17 @@ import qrSepay from "@/assets/qr-sepay.png";
 export default function CalculateBillPage() {
   const [houses, setHouses] = useState<House[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  
+
   const [selectedHouseId, setSelectedHouseId] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  
+
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [currentElectric, setCurrentElectric] = useState<string>("");
-  
+
   const [showReceipt, setShowReceipt] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
 
@@ -66,7 +66,7 @@ export default function CalculateBillPage() {
     }
     setShowReceipt(true);
     setReceiptImage(null);
-    
+
     // Scroll to receipt and generate image
     setTimeout(() => {
       receiptRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -92,30 +92,30 @@ export default function CalculateBillPage() {
   const saveBill = async () => {
     if (isSaving || !selectedRoom || !currentElectric) return;
     setIsSaving(true);
-    
+
     const currentElecNum = parseInt(currentElectric, 10);
-    const totalAmount = selectedRoom.rent_cost + 
-                  (currentElecNum - selectedRoom.latest_electric_number) * PRICING.ELECTRICITY_PER_KWH + 
-                  calculateWaterCost(selectedRoom.number_of_members) + 
-                  PRICING.SANITATION_WIFI;
+    const totalAmount = selectedRoom.rent_cost +
+      (currentElecNum - selectedRoom.latest_electric_number) * PRICING.ELECTRICITY_PER_KWH +
+      calculateWaterCost(selectedRoom.number_of_members) +
+      PRICING.SANITATION_WIFI;
 
     const { error: billError } = await supabase.from('monthly_bills').insert([{
-       room_id: selectedRoom.id,
-       month,
-       year,
-       electric_number: currentElecNum,
-       total_amount: totalAmount,
-       is_paid: false
+      room_id: selectedRoom.id,
+      month,
+      year,
+      electric_number: currentElecNum,
+      total_amount: totalAmount,
+      is_paid: false
     }]);
 
     if (billError) {
-       if (billError.code === '23505') {
-          alert('Hóa đơn phòng này trong tháng đã được lưu trước đó!');
-       } else {
-          alert('Lỗi lưu hóa đơn: ' + billError.message);
-       }
-       setIsSaving(false);
-       return;
+      if (billError.code === '23505') {
+        alert('Hóa đơn phòng này trong tháng đã được lưu trước đó!');
+      } else {
+        alert('Lỗi lưu hóa đơn: ' + billError.message);
+      }
+      setIsSaving(false);
+      return;
     }
 
     const { error: roomError } = await supabase.from('rooms')
@@ -123,20 +123,20 @@ export default function CalculateBillPage() {
       .eq('id', selectedRoom.id);
 
     if (roomError) {
-       alert('Đã lưu hóa đơn nhưng gặp lỗi khi cập nhật số điện phòng: ' + roomError.message);
+      alert('Đã lưu hóa đơn nhưng gặp lỗi khi cập nhật số điện phòng: ' + roomError.message);
     } else {
-       alert('Lưu hóa đơn thành công!');
-       if (selectedHouseId) fetchRooms(selectedHouseId);
-       
-       setSelectedRoom({
-          ...selectedRoom,
-          latest_electric_number: currentElecNum
-       });
-       
-       setCurrentElectric("");
-       setShowReceipt(false);
+      alert('Lưu hóa đơn thành công!');
+      if (selectedHouseId) fetchRooms(selectedHouseId);
+
+      setSelectedRoom({
+        ...selectedRoom,
+        latest_electric_number: currentElecNum
+      });
+
+      setCurrentElectric("");
+      setShowReceipt(false);
     }
-    
+
     setIsSaving(false);
   };
 
@@ -146,7 +146,7 @@ export default function CalculateBillPage() {
   return (
     <div>
       <h2 style={{ marginBottom: "16px" }}>Tính hóa đơn</h2>
-      
+
       <div className="card">
         <div className="form-group" style={{ display: 'flex', gap: '16px' }}>
           <div style={{ flex: 1 }}>
@@ -206,10 +206,10 @@ export default function CalculateBillPage() {
 
             <div className="form-group">
               <label className="form-label">Số điện hiện tại</label>
-              <input 
-                type="number" 
-                className="form-control" 
-                value={currentElectric} 
+              <input
+                type="number"
+                className="form-control"
+                value={currentElectric}
                 onChange={e => { setCurrentElectric(e.target.value); setShowReceipt(false); }}
                 placeholder="Nhập số điện trên đồng hồ"
               />
@@ -225,28 +225,28 @@ export default function CalculateBillPage() {
       {showReceipt && selectedRoom && currentElectric && (
         <div style={{ marginTop: '24px' }}>
           {!receiptImage ? (
-            <div 
-              className="receipt" 
+            <div
+              className="receipt"
               ref={receiptRef}
               style={{
-                 margin: '0',
-                 padding: '24px',
-                 background: 'white',
-                 color: 'black'
+                margin: '0',
+                padding: '24px',
+                background: 'white',
+                color: 'black'
               }}
             >
               <div className="receipt-header">
-                <h3>HÓA ĐƠN TIỀN PHÒNG</h3>
-                <p>Phòng: {selectedRoom.name}</p>
+                <p>HÓA ĐƠN TIỀN PHÒNG</p>
+                <h1 className="font-bold py-1">{selectedRoom.name}</h1>
                 <p>Tháng {month} / {year}</p>
               </div>
-              
+
               <div className="receipt-body">
                 <div className="receipt-row">
                   <span>Tiền phòng:</span>
                   <span>{selectedRoom.rent_cost.toLocaleString()} đ</span>
                 </div>
-                
+
                 <div className="receipt-row" style={{ color: 'var(--text-secondary)' }}>
                   <span>Số điện cũ:</span>
                   <span>{selectedRoom.latest_electric_number}</span>
@@ -259,24 +259,24 @@ export default function CalculateBillPage() {
                   <span>Tiền điện ({(Number(currentElectric) - selectedRoom.latest_electric_number)} ký x {PRICING.ELECTRICITY_PER_KWH.toLocaleString()}đ):</span>
                   <span>{((Number(currentElectric) - selectedRoom.latest_electric_number) * PRICING.ELECTRICITY_PER_KWH).toLocaleString()} đ</span>
                 </div>
-                
+
                 <div className="receipt-row">
                   <span>Nước ({selectedRoom.number_of_members} người):</span>
                   <span>{calculateWaterCost(selectedRoom.number_of_members).toLocaleString()} đ</span>
                 </div>
-                
+
                 <div className="receipt-row">
                   <span>Vệ sinh/Wifi:</span>
                   <span>{PRICING.SANITATION_WIFI.toLocaleString()} đ</span>
                 </div>
-                
+
                 <div className="receipt-total receipt-row">
                   <span>TỔNG CỘNG:</span>
                   <span>
                     {(
-                      selectedRoom.rent_cost + 
-                      (Number(currentElectric) - selectedRoom.latest_electric_number) * PRICING.ELECTRICITY_PER_KWH + 
-                      calculateWaterCost(selectedRoom.number_of_members) + 
+                      selectedRoom.rent_cost +
+                      (Number(currentElectric) - selectedRoom.latest_electric_number) * PRICING.ELECTRICITY_PER_KWH +
+                      calculateWaterCost(selectedRoom.number_of_members) +
                       PRICING.SANITATION_WIFI
                     ).toLocaleString()} đ
                   </span>
@@ -298,16 +298,16 @@ export default function CalculateBillPage() {
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
                 👆 Nhấn giữ vào ảnh hóa đơn để lưu về máy
               </p>
-              <img 
-                src={receiptImage} 
-                alt="Hóa đơn" 
-                style={{ width: '100%', maxWidth: '400px', display: 'block', margin: '0 auto', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }} 
+              <img
+                src={receiptImage}
+                alt="Hóa đơn"
+                style={{ width: '100%', maxWidth: '400px', display: 'block', margin: '0 auto', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}
               />
-              
+
               <div style={{ marginTop: '24px' }}>
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={saveBill} 
+                <button
+                  className="btn btn-secondary"
+                  onClick={saveBill}
                   disabled={isSaving}
                   style={{ border: '2px solid var(--primary-color)', color: 'var(--primary-color)' }}
                 >
