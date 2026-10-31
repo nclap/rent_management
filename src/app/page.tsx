@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { House, Room } from "@/types/database";
 import { PRICING, calculateWaterCost } from "@/lib/constants";
 import * as htmlToImage from "html-to-image";
+import qrSepay from "@/assets/qr-sepay.png";
 
 export default function CalculateBillPage() {
   const [houses, setHouses] = useState<House[]>([]);
@@ -77,6 +78,8 @@ export default function CalculateBillPage() {
     setTimeout(async () => {
       if (receiptRef.current) {
         try {
+          const imgs = Array.from(receiptRef.current.querySelectorAll("img"));
+          await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
           const imgData = await htmlToImage.toPng(receiptRef.current, { quality: 1, pixelRatio: 2 });
           setReceiptImage(imgData);
         } catch (err) {
@@ -278,6 +281,16 @@ export default function CalculateBillPage() {
                     ).toLocaleString()} đ
                   </span>
                 </div>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600 }}>Quét mã QR để thanh toán</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrSepay.src}
+                  alt="QR thanh toán SePay"
+                  style={{ width: '220px', maxWidth: '100%', display: 'block', margin: '0 auto' }}
+                />
               </div>
             </div>
           ) : (
